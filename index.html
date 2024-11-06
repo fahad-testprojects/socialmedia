@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fc;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #4a4a4a;
+            margin-top: 20px;
+        }
+
+        /* Container for the forms */
+        .form-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .form-container input, .form-container textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            background-color: #4e5b8a;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background-color: #3c4b73;
+        }
+
+        /* Post container */
+        .post {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .post strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .post p {
+            font-size: 1em;
+            color: #555;
+        }
+
+        /* Simpler Delete Button */
+        .delete-button {
+            background-color: #f44336;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        #logoutButton {
+            background-color: #f05d5e;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none;
+            transition: background-color 0.3s ease;
+        }
+
+        #logoutButton:hover {
+            background-color: #d04a4c;
+        }
+
+        #postForm {
+            display: none;
+        }
+
+        #loginForm {
+            display: block;
+        }
+
+        #registerForm {
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Welcome to Project Social Network!</h1>
+
+    <!-- Login Form -->
+    <div id="loginForm" class="form-container">
+        <h3>Login</h3>
+        <input type="email" id="loginEmail" placeholder="Email" required><br>
+        <input type="password" id="loginPassword" placeholder="Password" required><br>
+        <button onclick="login()">Login</button>
+        <p>Don't have an account? <a href="javascript:void(0);" onclick="showRegisterForm()">Register</a></p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="registerForm" class="form-container">
+        <h3>Register</h3>
+        <input type="text" id="registerUsername" placeholder="Username" required><br>
+        <input type="email" id="registerEmail" placeholder="Email" required><br>
+        <input type="password" id="registerPassword" placeholder="Password" required><br>
+        <button onclick="register()">Register</button>
+        <p>Already have an account? <a href="javascript:void(0);" onclick="showLoginForm()">Login</a></p>
+    </div>
+
+    <!-- Post Creation Form -->
+    <div id="postForm" class="form-container">
+        <h3>Create a Post</h3>
+        <textarea id="postContent" placeholder="What's on your mind?" rows="4" required></textarea><br>
+        <button onclick="makePost()">Post</button>
+    </div>
+
+    <!-- Post List -->
+    <div id="postList"></div>
+
+    <!-- Logout Button -->
+    <button id="logoutButton" onclick="logout()">Logout</button>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyABr2r5rGbLszp5ys0DL80-kkh2_0ozCs8",
+            authDomain: "social-media-project-b109a.firebaseapp.com",
+            projectId: "social-media-project-b109a",
+            storageBucket: "social-media-project-b109a.appspot.com",
+            messagingSenderId: "836065935165",
+            appId: "1:836065935165:web:bc5b2450b7a4e655774f54",
+            measurementId: "G-9BSVWPCLPY"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        var auth = firebase.auth();
+        var db = firebase.firestore();
+
+        // Show Register Form
+        function showRegisterForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        // Show Login Form
+        function showLoginForm() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
+        // Register New User
+        function register() {
+            var email = document.getElementById('registerEmail').value;
+            var password = document.getElementById('registerPassword').value;
+            var username = document.getElementById('registerUsername').value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(function(userCredential) {
+                    var user = userCredential.user;
+                    user.updateProfile({ displayName: username })
+                        .then(function() {
+                            alert("Registration Successful!");
+                            document.getElementById('registerForm').style.display = 'none';
+                            document.getElementById('postForm').style.display = 'block';
+                            document.getElementById('logoutButton').style.display = 'block';
+                        });
+                })
+                .catch(function(error) {
+                    alert(error.message);
+                });
+        }
+
+        // Login User
+        function login() {
+            var email = document.getElementById('loginEmail').value;
+            var password = document.getElementById('loginPassword').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(function(userCredential) {
+                    alert("Login Successful!");
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('postForm').style.display = 'block';
+                    document.getElementById('logoutButton').style.display = 'block';
+                    loadPosts();
+                })
+                .catch(function(error) {
+                    alert(error.message);
+                });
+        }
+
+        // Logout User
+        function logout() {
+            auth.signOut().then(function() {
+                document.getElementById('logoutButton').style.display = 'none';
+                document.getElementById('postForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                loadPosts();
+            }).catch(function(error) {
+                alert(error.message);
+            });
+        }
+
+        // Create a Post
+        function makePost() {
+            var content = document.getElementById('postContent').value;
+            if (content) {
+                db.collection('posts').add({
+                    content: content,
+                    createdAt: new Date(),
+                    username: auth.currentUser.displayName
+                })
+                .then(function() {
+                    alert("Post created!");
+                    loadPosts();
+                })
+                .catch(function(error) {
+                    alert(error.message);
+                });
+            }
+        }
+
+        // Load Posts
+        function loadPosts() {
+            db.collection('posts').orderBy('createdAt', 'desc').get()
+                .then(function(querySnapshot) {
+                    var postsContainer = document.getElementById('postList');
+                    postsContainer.innerHTML = '';
+                    querySnapshot.forEach(function(doc) {
+                        var post = doc.data();
+                        var postElement = document.createElement('div');
+                        postElement.classList.add('post');
+                        postElement.innerHTML = `<strong>${post.username}</strong><p>${post.content}</p>`;
+                        
+                        if (auth.currentUser && auth.currentUser.displayName === post.username) {
+                            var deleteButton = document.createElement('button');
+                            deleteButton.classList.add('delete-button');
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.onclick = function() {
+                                deletePost(doc.id);
+                            };
+                            postElement.appendChild(deleteButton);
+                        }
+
+                        postsContainer.appendChild(postElement);
+                    });
+                });
+        }
+
+        // Delete Post
+        function deletePost(postId) {
+            db.collection('posts').doc(postId).delete()
+                .then(function() {
+                    alert("Post deleted!");
+                    loadPosts();
+                })
+                .catch(function(error) {
+                    alert(error.message);
+                });
+        }
+
+        // Auth State Change Listener
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('postForm').style.display = 'block';
+                document.getElementById('logoutButton').style.display = 'block';
+                loadPosts();
+            } else {
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('postForm').style.display = 'none';
+                document.getElementById('logoutButton').style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>
